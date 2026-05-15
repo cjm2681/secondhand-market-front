@@ -1,4 +1,3 @@
-// src/api/axios.js
 import axios from 'axios';
 
 const api = axios.create({
@@ -6,60 +5,51 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// 요청마다 토큰 자동 첨부
+// 요청마다 액세스 토큰 자동 첨부
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-// 401 응답 처리
+// 401 응답 시 리프레시 토큰으로 재발급 시도
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const requestUrl = error.config?.url || '';
+    const originalRequest = error.config;
 
-    // ✅ 이 API들은 401을 컴포넌트에서 직접 처리
-    const excludeUrls = [
-      '/api/auth/login',
-      '/api/users/me/password',
-      '/api/auth/reissue',   // ✅ 재발급 API 자체도 제외 (무한루프 방지)
-    ];
+    // 로그인/재발급 요청 자체가 401이면 재시도 없이 로그아웃
+    const excludeUrls = ['/api/auth/login', '/api/auth/reissue'];
+    const isExcluded = excludeUrls.some((url) =>
+      originalRequest.url?.includes(url)
+    );
 
-    const isExcluded = excludeUrls.some((url) => requestUrl.includes(url));
+    if (error.response?.status === 401 && !isExcluded && !originalRequest._retry) {
+      originalRequest._retry = true; // 무한 재시도 방지
 
-    // ✅ 401이고 제외 대상이 아니면 자동 재발급 시도
-    if (error.response?.status === 401 && !isExcluded) {
       const refreshToken = localStorage.getItem('refreshToken');
-
       if (refreshToken) {
         try {
-          // Refresh Token으로 새 Access Token 재발급 요청
+          // 리프레시 토큰으로 액세스 토큰 재발급
           const res = await axios.post(
             `${import.meta.env.VITE_API_URL}/api/auth/reissue`,
             {},
             { headers: { 'Refresh-Token': refreshToken } }
           );
-
           const newAccessToken = res.data.data.accessToken;
 
-          // 새 Access Token 저장
+          // 새 토큰 저장 후 원래 요청 재시도
           localStorage.setItem('accessToken', newAccessToken);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return api(originalRequest);
 
-          // ✅ 실패했던 원래 요청을 새 토큰으로 재시도
-          error.config.headers.Authorization = `Bearer ${newAccessToken}`;
-          return api(error.config);
-
-        } catch (reissueError) {
-          // 재발급도 실패 → 진짜 로그아웃
+        } catch {
+          // 리프레시 토큰도 만료 → 로그아웃
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
         }
       } else {
-        // Refresh Token 자체가 없음 → 로그아웃
         localStorage.removeItem('accessToken');
         window.location.href = '/login';
       }
