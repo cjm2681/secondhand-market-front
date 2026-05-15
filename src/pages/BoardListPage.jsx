@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Container, Box, Typography, Button, TextField,
   List, ListItem, ListItemButton, ListItemText,
@@ -12,11 +12,14 @@ import CustomPagination from '../components/CustomPagination';
 export default function BoardListPage() {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuthStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+const page = Number(searchParams.get('page') || 1);
+const keyword = searchParams.get('keyword') || '';
+
   const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [keyword, setKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
@@ -36,16 +39,15 @@ export default function BoardListPage() {
     }
   };
 
-  const handleSearch = (e) => {
+const handleSearch = (e) => {
     e.preventDefault();
-    setKeyword(searchInput);
-    setPage(1);
-  };
+    setSearchParams({ page: 1, keyword: searchInput });
+};
 
-  const handlePageChange = (newPage) => {
-    setPage(newPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+const handlePageChange = (newPage) => {
+    setSearchParams({ page: newPage, keyword });
+    window.scrollTo({ top: 0, behavior: 'auto' });
+};
 
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('ko-KR');
 

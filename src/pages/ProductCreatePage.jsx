@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Container, Box, TextField, Button,
   Typography, Alert, IconButton
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { createProduct } from '../api/product';
+import { createProduct, updateProduct, getProduct } from '../api/product';
+
 
 export default function ProductCreatePage() {
   const navigate = useNavigate();
@@ -13,6 +14,33 @@ export default function ProductCreatePage() {
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [error, setError] = useState('');
+
+  const { id } = useParams(); // 수정 모드면 id 있음, 작성 모드면 undefined
+  const isEditMode = !!id;   // id 있으면 수정 모드
+
+  // 수정 모드일 때 기존 데이터 불러오기
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchProduct = async () => {
+      try {
+        const res = await getProduct(id);
+        const product = res.data.data;
+        setForm({
+          title: product.title,
+          description: product.description || '',
+          price: product.price,
+        });
+        // 기존 이미지 URL을 미리보기로 표시
+        setPreviews(product.imageUrls || []);
+      } catch {
+        setError('상품 정보를 불러오지 못했습니다.');
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,6 +50,7 @@ export default function ProductCreatePage() {
     const files = Array.from(e.target.files);
     setImages(files);
     setPreviews(files.map((f) => URL.createObjectURL(f)));
+    e.target.value = '';  // input 초기화 → 같은 파일도 재선택 가능
   };
 
   const removeImage = (index) => {
@@ -43,8 +72,15 @@ export default function ProductCreatePage() {
     images.forEach((img) => formData.append('images', img));
 
     try {
-      const res = await createProduct(formData);
-      navigate(`/products/${res.data.data.id}`);
+      if (isEditMode) {
+        // 수정 모드 → PUT
+        await updateProduct(id, formData);
+        navigate(`/products/${id}`);
+      } else {
+        // 작성 모드 → POST
+        const res = await createProduct(formData);
+        navigate(`/products/${res.data.data.id}`);
+      }
     } catch (err) {
       setError(err.response?.data?.message || '등록에 실패했습니다');
     }
@@ -52,7 +88,9 @@ export default function ProductCreatePage() {
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>판매글 작성</Typography>
+      <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+        {isEditMode ? '판매글 수정' : '판매글 작성'}
+      </Typography>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

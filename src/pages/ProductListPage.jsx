@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Container, Grid, Card, CardContent, CardMedia, CardActionArea,
   Typography, Box, TextField, Button, Chip
@@ -17,11 +17,15 @@ const statusLabel = {
 export default function ProductListPage() {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuthStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+    // URL에서 page, keyword 읽어옴
+  const page = Number(searchParams.get('page') || 1);
+  const keyword = searchParams.get('keyword') || '';
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [keyword, setKeyword] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
@@ -49,13 +53,12 @@ export default function ProductListPage() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setKeyword(searchInput);
-    setPage(1);
+    setSearchParams({ page: 1, keyword: searchInput });
   };
 
   const handlePageChange = (newPage) => {
-    setPage(newPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSearchParams({ page: newPage, keyword });
+    window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
   return (
