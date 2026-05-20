@@ -33,7 +33,8 @@ export default function ChatPage() {
     const token = localStorage.getItem('accessToken');
     const client = new Client({
       webSocketFactory: () =>
-        new SockJS(`${import.meta.env.VITE_API_URL}/ws-chat`),
+        // new SockJS(`${import.meta.env.VITE_API_URL}/ws-chat`),   //로컬 환경 채팅 URL
+      new SockJS('/ws-chat'),   // 배포 서버 환경 채팅 URL
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {
@@ -149,7 +150,8 @@ export default function ChatPage() {
     const token = localStorage.getItem('accessToken');
     const client = new Client({
       webSocketFactory: () =>
-        new SockJS(`${import.meta.env.VITE_API_URL}/ws-chat`),
+        // new SockJS(`${import.meta.env.VITE_API_URL}/ws-chat`),   //로컬 환경 채팅 URL
+      new SockJS('/ws-chat'),   // 배포 서버 환경 채팅 URL
       connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       onConnect: () => {

@@ -7,4 +7,17 @@ export default defineConfig({
   define: {
     global: 'globalThis',  // sockjs-client 문제 이거 추가
   },
+    server: {
+    proxy: {
+      '/ws-chat': {
+        target: 'http://localhost:8080',
+        ws: true,          // WebSocket 프록시
+        changeOrigin: true,
+      },
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      }
+    }
+  }
 })
