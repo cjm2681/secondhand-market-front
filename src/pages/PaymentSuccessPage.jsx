@@ -29,6 +29,7 @@ export default function PaymentSuccessPage() {
       amount: Number(amount),
     })
       .then(() => {
+        sessionStorage.removeItem('pendingOrderId'); // 추가
         alert('결제가 완료되었습니다!');
         navigate('/orders',  { replace: true });
       })

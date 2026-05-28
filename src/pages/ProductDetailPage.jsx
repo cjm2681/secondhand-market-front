@@ -59,6 +59,9 @@ const handleOrder = async () => {
     console.log('1단계 성공:', orderRes.data);   // ✅ 추가
     const order = orderRes.data.data;
 
+    // 결제 실패 시 취소할 수 있도록 저장
+    sessionStorage.setItem('pendingOrderId', order.orderId);
+
     // 2단계: 토스 결제창 띄우기
     const tossPayments = await loadTossPayments(
       import.meta.env.VITE_TOSS_CLIENT_KEY
