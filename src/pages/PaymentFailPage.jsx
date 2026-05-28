@@ -8,15 +8,16 @@ export default function PaymentFailPage() {
   const navigate = useNavigate();
   const message = searchParams.get('message') || '결제에 실패했습니다';
 
-  useEffect(() => {
-    // 결제 실패 시 주문 취소 → 상품 SALE로 복구
+useEffect(() => {
     const orderId = sessionStorage.getItem('pendingOrderId');
+    console.log('pendingOrderId:', orderId);  // 값 있는지 확인
     if (orderId) {
       cancelOrder(orderId)
-        .catch(console.error)
+        .then(() => console.log('주문 취소 성공'))
+        .catch((err) => console.error('주문 취소 실패:', err))
         .finally(() => sessionStorage.removeItem('pendingOrderId'));
     }
-  }, []);
+}, []);
 
   return (
     <Container maxWidth="sm" sx={{ mt: 8, textAlign: 'center' }}>
