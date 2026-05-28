@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { getProduct, deleteProduct, updateProductStatus } from '../api/product';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
-import { createReadyOrder, confirmPayment } from '../api/order';
+import { createReadyOrder, confirmPayment, cancelOrder } from '../api/order';
 import { createOrder } from '../api/order';
 import { getOrCreateRoom } from '../api/chat';
 import useAuthStore from '../store/authStore';
@@ -105,12 +105,20 @@ const handleOrder = async () => {
     //   failUrl: `${window.location.origin}/payment/fail`,
     // });      버전바뀌면서 달라졌는지 이게 첫번째버전
 
-  } catch (err) {
-    if (err.code === 'USER_CANCEL') return;  // 사용자가 취소한 경우
-    console.error('결제 오류 전체:', err);           // ✅ 추가
-    console.error('응답 데이터:', err.response?.data); // ✅ 추가
+} catch (err) {
+    if (err.code === 'USER_CANCEL') {
+        // 결제창 X 눌러서 취소 → 주문 취소하고 상품 SALE로 복구
+        const orderId = sessionStorage.getItem('pendingOrderId');
+        if (orderId) {
+            await cancelOrder(orderId).catch(console.error);
+            sessionStorage.removeItem('pendingOrderId');
+        }
+        return;
+    }
+    console.error('결제 오류 전체:', err);
+    console.error('응답 데이터:', err.response?.data);
     alert(err.response?.data?.message || '결제 처리 중 오류가 발생했습니다');
-  }
+}
 };
 
 
