@@ -34,7 +34,8 @@ export default function PaymentSuccessPage() {
         navigate('/orders',  { replace: true });
       })
       .catch((err) => {
-        setError(err.response?.data?.message || '결제 승인에 실패했습니다');
+        // setError(err.response?.data?.message || '결제 승인에 실패했습니다');
+        navigate('/payment/pending', { replace: true });
       });
   }, []);
 

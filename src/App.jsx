@@ -46,6 +46,7 @@ function App() {
           <Route path="/orders" element={<MyOrdersPage />} />
           <Route path="/profile" element={<MyProfilePage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/payment/pending" element={<PaymentPendingPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
