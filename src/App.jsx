@@ -16,7 +16,7 @@ import PasswordResetPage from './pages/PasswordResetPage';
 
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentFailPage from './pages/PaymentFailPage';
-
+import PaymentPendingPage from './pages/PaymentPendingPage';
 import AdminPage from './pages/AdminPage';
 
 
