@@ -3,19 +3,19 @@ import {
   Container, Box, Typography, Tab, Tabs,
   Card, CardContent, Chip, Button, Divider, Alert
 } from '@mui/material';
-import { getMyOrders, getMySales, cancelOrder } from '../api/order';
+import { getMyOrders, getMySales, cancelOrder, confirmOrder } from '../api/order';
 
 const statusLabel = {
-  READY:     { label: '주문접수', color: 'default' },
-  PAID:      { label: '결제완료', color: 'primary' },
-  CANCELLED: { label: '취소됨',  color: 'error' },
+  READY: { label: '주문접수', color: 'default' },
+  PAID: { label: '결제완료', color: 'primary' },
+  CANCELLED: { label: '취소됨', color: 'error' },
   CONFIRMED: { label: '구매확정', color: 'success' },
 };
 
 const paymentStatusLabel = {
-  READY:    '결제대기',
-  PAID:     '결제완료',
-  CANCELLED:'결제취소',
+  READY: '결제대기',
+  PAID: '결제완료',
+  CANCELLED: '결제취소',
   REFUNDED: '환불완료',
 };
 
@@ -45,6 +45,17 @@ export default function MyOrdersPage() {
       fetchOrders();
     } catch (err) {
       alert(err.response?.data?.message || '취소에 실패했습니다');
+    }
+  };
+
+  const handleConfirm = async (orderId) => {
+    if (!window.confirm('구매 확정하시겠습니까? 확정 후에는 취소가 불가능합니다.')) return;
+    try {
+      await confirmOrder(orderId);
+      alert('구매가 확정되었습니다.');
+      fetchOrders();
+    } catch (err) {
+      alert(err.response?.data?.message || '오류가 발생했습니다.');
     }
   };
 
@@ -112,7 +123,11 @@ export default function MyOrdersPage() {
 
               {/* 취소 버튼 (구매 내역 + PAID 상태만) */}
               {tab === 0 && order.orderStatus === 'PAID' && (
-                <Box sx={{ mt: 2 }}>
+                <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                  <Button variant="contained" color="primary" size="small"
+                    onClick={() => handleConfirm(order.orderId)}>
+                    구매 확정
+                  </Button>
                   <Button variant="outlined" color="error" size="small"
                     onClick={() => handleCancel(order.orderId)}>
                     주문 취소

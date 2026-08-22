@@ -13,6 +13,7 @@ import {
 import { getProducts } from '../api/product';
 import { getBoards } from '../api/board';
 import CustomPagination from '../components/CustomPagination';
+import { getAllWithdrawals, approveWithdrawal, rejectWithdrawal } from '../api/point';
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -42,18 +43,25 @@ export default function AdminPage() {
 
 
   // 판매글 검색 상태 추가
-const [productKeyword, setProductKeyword] = useState('');
-const [productSearchInput, setProductSearchInput] = useState('');
+  const [productKeyword, setProductKeyword] = useState('');
+  const [productSearchInput, setProductSearchInput] = useState('');
 
-// 게시글 검색 상태 추가
-const [boardKeyword, setBoardKeyword] = useState('');
-const [boardSearchInput, setBoardSearchInput] = useState('');
+  // 게시글 검색 상태 추가
+  const [boardKeyword, setBoardKeyword] = useState('');
+  const [boardSearchInput, setBoardSearchInput] = useState('');
+
+
+  // 출금 관리
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [loadingWithdrawals, setLoadingWithdrawals] = useState(false);
+
 
   useEffect(() => {
     if (tab === 0) fetchUsers();
     if (tab === 1) fetchProducts();
     if (tab === 2) fetchBoards();
-  }, [tab, userPage, userKeyword, productPage, productKeyword,boardPage, boardKeyword]);
+    if (tab === 3) fetchWithdrawals();
+  }, [tab, userPage, userKeyword, productPage, productKeyword, boardPage, boardKeyword]);
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
@@ -71,50 +79,50 @@ const [boardSearchInput, setBoardSearchInput] = useState('');
     }
   };
 
-const fetchProducts = async () => {
-  setLoadingProducts(true);
-  try {
-    const res = await getProducts({
-      keyword: productKeyword || undefined,
-      page: productPage - 1
-    });
-    setProducts(res.data.data.content);
-    setProductTotalPages(res.data.data.page?.totalPages || 1);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoadingProducts(false);
-  }
-};
+  const fetchProducts = async () => {
+    setLoadingProducts(true);
+    try {
+      const res = await getProducts({
+        keyword: productKeyword || undefined,
+        page: productPage - 1
+      });
+      setProducts(res.data.data.content);
+      setProductTotalPages(res.data.data.page?.totalPages || 1);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
 
-const fetchBoards = async () => {
-  setLoadingBoards(true);
-  try {
-    const res = await getBoards({
-      keyword: boardKeyword || undefined,
-      page: boardPage - 1
-    });
-    setBoards(res.data.data.content);
-    setBoardTotalPages(res.data.data.page?.totalPages || 1);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoadingBoards(false);
-  }
-};
+  const fetchBoards = async () => {
+    setLoadingBoards(true);
+    try {
+      const res = await getBoards({
+        keyword: boardKeyword || undefined,
+        page: boardPage - 1
+      });
+      setBoards(res.data.data.content);
+      setBoardTotalPages(res.data.data.page?.totalPages || 1);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingBoards(false);
+    }
+  };
 
 
-const handleProductSearch = (e) => {
-  e.preventDefault();
-  setProductKeyword(productSearchInput);
-  setProductPage(1);
-};
+  const handleProductSearch = (e) => {
+    e.preventDefault();
+    setProductKeyword(productSearchInput);
+    setProductPage(1);
+  };
 
-const handleBoardSearch = (e) => {
-  e.preventDefault();
-  setBoardKeyword(boardSearchInput);
-  setBoardPage(1);
-};
+  const handleBoardSearch = (e) => {
+    e.preventDefault();
+    setBoardKeyword(boardSearchInput);
+    setBoardPage(1);
+  };
 
 
   const handleToggleBan = async (userId) => {
@@ -157,6 +165,43 @@ const handleBoardSearch = (e) => {
 
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('ko-KR');
 
+
+  const fetchWithdrawals = async () => {
+    setLoadingWithdrawals(true);
+    try {
+      const res = await getAllWithdrawals();
+      setWithdrawals(res.data.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingWithdrawals(false);
+    }
+  };
+
+  const handleApprove = async (withdrawalId) => {
+    if (!window.confirm('출금을 승인하시겠습니까?')) return;
+    try {
+      await approveWithdrawal(withdrawalId);
+      setMsg({ type: 'success', text: '출금이 승인되었습니다.' });
+      fetchWithdrawals();
+    } catch (err) {
+      setMsg({ type: 'error', text: err.response?.data?.message || '처리 실패' });
+    }
+  };
+
+  const handleReject = async (withdrawalId) => {
+    if (!window.confirm('출금을 거절하시겠습니까?')) return;
+    try {
+      await rejectWithdrawal(withdrawalId);
+      setMsg({ type: 'success', text: '출금이 거절되었습니다.' });
+      fetchWithdrawals();
+    } catch (err) {
+      setMsg({ type: 'error', text: err.response?.data?.message || '처리 실패' });
+    }
+  };
+
+
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>어드민 관리</Typography>
@@ -173,6 +218,7 @@ const handleBoardSearch = (e) => {
         <Tab label="회원 관리" />
         <Tab label="판매글 관리" />
         <Tab label="게시글 관리" />
+        <Tab label="출금 관리" />
       </Tabs>
 
       {/* 탭 0: 회원 관리 */}
@@ -327,15 +373,15 @@ const handleBoardSearch = (e) => {
               onChange={(p) => setProductPage(p)} />
           )}
 
-    <form onSubmit={handleProductSearch}>
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-        <TextField size="small" placeholder="제목 검색"
-          value={productSearchInput}
-          onChange={(e) => setProductSearchInput(e.target.value)}
-          sx={{ flex: 1 }} />
-        <Button type="submit" variant="outlined">검색</Button>
-      </Box>
-    </form>
+          <form onSubmit={handleProductSearch}>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField size="small" placeholder="제목 검색"
+                value={productSearchInput}
+                onChange={(e) => setProductSearchInput(e.target.value)}
+                sx={{ flex: 1 }} />
+              <Button type="submit" variant="outlined">검색</Button>
+            </Box>
+          </form>
 
         </Box>
       )}
@@ -402,18 +448,94 @@ const handleBoardSearch = (e) => {
               onChange={(p) => setBoardPage(p)} />
           )}
 
-    <form onSubmit={handleBoardSearch}>
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-        <TextField size="small" placeholder="제목 검색"
-          value={boardSearchInput}
-          onChange={(e) => setBoardSearchInput(e.target.value)}
-          sx={{ flex: 1 }} />
-        <Button type="submit" variant="outlined">검색</Button>
-      </Box>
-    </form>
+          <form onSubmit={handleBoardSearch}>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField size="small" placeholder="제목 검색"
+                value={boardSearchInput}
+                onChange={(e) => setBoardSearchInput(e.target.value)}
+                sx={{ flex: 1 }} />
+              <Button type="submit" variant="outlined">검색</Button>
+            </Box>
+          </form>
 
         </Box>
       )}
+
+
+      {/* 탭 3: 출금 관리 */}
+      {tab === 3 && (
+        <Box>
+          {loadingWithdrawals ? (
+            <Typography textAlign="center" color="text.secondary">불러오는 중...</Typography>
+          ) : (
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'grey.50' }}>
+                    <TableCell>ID</TableCell>
+                    <TableCell>신청자</TableCell>
+                    <TableCell>금액</TableCell>
+                    <TableCell>은행</TableCell>
+                    <TableCell>계좌번호</TableCell>
+                    <TableCell>상태</TableCell>
+                    <TableCell>신청일</TableCell>
+                    <TableCell align="center">관리</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {withdrawals.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                        출금 신청이 없습니다.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    withdrawals.map((w) => (
+                      <TableRow key={w.id} hover>
+                        <TableCell>{w.id}</TableCell>
+                        <TableCell>{w.userNickname}</TableCell>
+                        <TableCell>{w.amount.toLocaleString()}원</TableCell>
+                        <TableCell>{w.bankName}</TableCell>
+                        <TableCell>{w.accountNumber}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={
+                              w.status === 'PENDING' ? '대기중' :
+                                w.status === 'COMPLETED' ? '완료' : '거절됨'
+                            }
+                            color={
+                              w.status === 'PENDING' ? 'warning' :
+                                w.status === 'COMPLETED' ? 'success' : 'error'
+                            }
+                            size="small" />
+                        </TableCell>
+                        <TableCell>{formatDate(w.createdAt)}</TableCell>
+                        <TableCell align="center">
+                          {w.status === 'PENDING' && (
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Button size="small" variant="outlined"
+                                color="success"
+                                onClick={() => handleApprove(w.id)}>
+                                승인
+                              </Button>
+                              <Button size="small" variant="outlined"
+                                color="error"
+                                onClick={() => handleReject(w.id)}>
+                                거절
+                              </Button>
+                            </Box>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
+      )}
+
     </Container>
   );
 }

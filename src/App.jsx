@@ -19,6 +19,8 @@ import PaymentFailPage from './pages/PaymentFailPage';
 import PaymentPendingPage from './pages/PaymentPendingPage';
 import AdminPage from './pages/AdminPage';
 
+import PointPage from './pages/PointPage';
+
 
 function App() {
   return (
@@ -47,6 +49,7 @@ function App() {
           <Route path="/profile" element={<MyProfilePage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/payment/pending" element={<PaymentPendingPage />} />
+          <Route path="/point" element={<PointPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -11,9 +11,9 @@ import { getMyBoards } from '../api/board';
 import CustomPagination from '../components/CustomPagination';
 
 const statusLabel = {
-  SALE:     { label: '판매중',   color: 'success' },
-  RESERVED: { label: '예약중',   color: 'warning' },
-  SOLD:     { label: '판매완료', color: 'default' },
+  SALE: { label: '판매중', color: 'success' },
+  RESERVED: { label: '예약중', color: 'warning' },
+  SOLD: { label: '판매완료', color: 'default' },
 };
 
 export default function MyProfilePage() {
@@ -107,6 +107,19 @@ export default function MyProfilePage() {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Typography variant="body2" color="text.secondary">이메일: {user.email}</Typography>
               <Typography variant="body2" color="text.secondary">가입일: {formatDate(user.createdAt)}</Typography>
+
+              {/* 포인트 잔액 */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  포인트 잔액: <strong>{user.point?.toLocaleString() || 0}원</strong>
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => navigate('/point')}>
+                  포인트 내역 / 출금 신청
+                </Button>
+              </Box>
             </Box>
           </Paper>
 
@@ -172,8 +185,10 @@ export default function MyProfilePage() {
                     <ListItemButton onClick={() => navigate(`/products/${product.id}`)}>
                       {product.thumbnailUrl && (
                         <Box component="img" src={product.thumbnailUrl}
-                          sx={{ width: 60, height: 60, objectFit: 'cover',
-                                borderRadius: 1, mr: 2, flexShrink: 0 }} />
+                          sx={{
+                            width: 60, height: 60, objectFit: 'cover',
+                            borderRadius: 1, mr: 2, flexShrink: 0
+                          }} />
                       )}
                       <ListItemText
                         primary={
